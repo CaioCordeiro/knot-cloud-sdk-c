@@ -64,28 +64,6 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-def __parse_update_message(msg_file):
-    if msg_file:
-        with open(msg_file) as fd:
-            msg = json.load(fd)
-    else:
-        msg = {
-            "id": "0123456789abcdef",
-            "data": [{"sensor_id": 253, "value": True}]
-        }
-    return json.dumps(msg)
-
-def __parse_request_message(msg_file):
-    if msg_file:
-        with open(msg_file) as fd:
-            msg = json.load(fd)
-    else:
-        msg = {
-            "id": "0123456789abcdef",
-            "data": [253]
-        }
-    return json.dumps(msg)
-
 def __on_msg_received(args, channel, method, properties, body):
     logging.info("%r:%r" % (method.routing_key, body))
     message = json.loads(body)
@@ -168,24 +146,6 @@ def msg_consume(args):
     logging.info('Listening to messages')
     channel.start_consuming()
 
-def msg_update(args):
-    channel = __amqp_start()
-    msg = __parse_update_message(args.json_msg_file)
-    channel.basic_publish(exchange=fog_exchange,
-                          properties=pika.BasicProperties(
-                            expiration=MESSAGE_EXPIRATION_TIME_MS,
-                          ),
-                          routing_key=KEY_UPDATE, body=msg)
-
-def msg_request(args):
-    channel = __amqp_start()
-    msg = __parse_request_message(args.json_msg_file)
-    channel.basic_publish(exchange=fog_exchange,
-                          properties=pika.BasicProperties(
-                            expiration=MESSAGE_EXPIRATION_TIME_MS,
-                          ),
-                          routing_key=KEY_REQUEST, body=msg)
-
 def no_command(args):
     parser.print_help()
     exit(1)
@@ -197,36 +157,9 @@ subparsers = parser.add_subparsers(help='sub-command help', dest='subcommand')
 parser_listen = subparsers.add_parser('listen', help='Listen to messages \
     from client KNoT daemon', formatter_class=argparse.RawTextHelpFormatter)
 parser_listen.add_argument('-s', '--with-side-effect', action='store_true',
-                            help='Send messages with error')
+                           help='Send messages with error')
+# Consuming Mensages
 parser_listen.set_defaults(func=msg_consume)
-
-parser_update = subparsers.add_parser('send-update', help='Sends a message to \
-    update the sensor in device', formatter_class=argparse.RawTextHelpFormatter)
-parser_update.add_argument('-f', '--json-msg-file', type=str,
-    help='''JSON File with update message to be sent.
-    Format: {
-              "id": <device_id>,
-              "data": [{
-                  "sensor_id": <sensor_id>,
-                  "data": <sensor_data>
-              }, ...]
-            }
-    ''',
-    default='', metavar="MSG_FILE")
-parser_update.set_defaults(func=msg_update)
-
-parser_request = subparsers.add_parser('send-request', help='Sends a message \
-    requesting data from sensor device',
-    formatter_class=argparse.RawTextHelpFormatter)
-parser_request.add_argument('-f', '--json-msg-file', type=str,
-    help='''JSON File with request message to be sent.
-    Format: {
-              "id": <device_id>,
-              "data":[<sensor_id>, ...]
-            }
-    ''',
-    default='', metavar="MSG_FILE")
-parser_request.set_defaults(func=msg_request)
 
 options = parser.parse_args()
 options.func(options)
