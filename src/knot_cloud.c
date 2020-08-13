@@ -38,6 +38,7 @@
 
 #include "mq.h"
 #include "parser.h"
+#include "log.h"
 #include "knot_cloud.h"
 
 #define MQ_QUEUE_FOG_OUT "thingd-fogOut"
@@ -713,6 +714,7 @@ int knot_cloud_start(char *url, char *user_token,
 		     knot_cloud_disconnected_cb_t disconnected_cb,
 		     void *user_data)
 {
+	log_ell_enable();
 	user_auth_token = l_strdup(user_token);
 	headers[0].key = amqp_cstring_bytes(MQ_AUTHORIZATION_HEADER);
 	headers[0].value.kind = AMQP_FIELD_KIND_UTF8;

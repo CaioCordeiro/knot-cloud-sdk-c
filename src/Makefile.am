@@ -1,5 +1,5 @@
 lib_headers = knot_cloud.h
-lib_sources = knot_cloud.c parser.c parser.h mq.c mq.h
+lib_sources = knot_cloud.c parser.c parser.h mq.c mq.h log.c log.h
 
 modules_libadd = @ELL_LIBS@ @JSON_LIBS@ @RABBITMQ_LIBS@ @KNOTPROTO_LIBS@
 modules_cflags = @ELL_CFLAGS@ @JSON_CFLAGS@ @RABBITMQ_CFLAGS@ @KNOTPROTO_CFLAGS@
