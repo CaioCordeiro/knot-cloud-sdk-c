@@ -70,6 +70,13 @@ def __on_msg_received(args, channel, method, properties, body):
     message['error'] = 'error mocked' if args.with_side_effect else None
 
     if method.exchange == data_exchange: # ONLINE state
+        channel.basic_publish(
+            exchange=data_exchange,
+            routing_key=KEY_DATA,
+            body=json.dumps(message),
+
+        )
+        logging.info(" [x] Sent %r" % (message))
         return None
 
     elif method.routing_key == EVENT_REGISTER: # REGISTER state
@@ -78,6 +85,15 @@ def __on_msg_received(args, channel, method, properties, body):
 
     elif method.routing_key == EVENT_AUTH: # AUTH state
         del message['token']
+        channel.basic_publish(
+            exchange=device_exchange,
+            routing_key=properties.reply_to,
+            body=json.dumps(message),
+
+        )
+        logging.info(" [x] Sent %r" % (message))
+        return None
+
     elif method.routing_key == EVENT_LIST:
         message['devices'] = [
         {
@@ -100,7 +116,16 @@ def __on_msg_received(args, channel, method, properties, body):
                 "type_id": 65521,
                 "name": "LED"
             }]
-        }]
+            }
+        ]
+        channel.basic_publish(
+            exchange=device_exchange,
+            routing_key=properties.reply_to,
+            body=json.dumps(message)
+        )
+        logging.info(" [x] Sent %r" % (message))
+        return None
+
     elif method.routing_key == EVENT_SCHEMA: # SCHEMA state
         del message['schema']
 
