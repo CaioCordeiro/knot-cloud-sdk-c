@@ -31,23 +31,21 @@ device_exchange = 'device'
 QUEUE_CLOUD_NAME = 'connIn-messages'
 
 MESSAGE_EXPIRATION_TIME_MS = '10000'
-
+# Babeltower Events API
 EVENT_REGISTER = 'device.register'
 KEY_REGISTERED = 'device.registered'
 
 EVENT_UNREGISTER = 'device.unregister'
 KEY_UNREGISTERED = 'device.unregistered'
 
-EVENT_AUTH = 'device.cmd.auth'
+EVENT_AUTH = 'device.auth'
 KEY_AUTH = 'device.auth'
 
 EVENT_LIST = 'device.cmd.list'
 KEY_LIST_DEVICES = 'device.list'
 
-EVENT_SCHEMA = 'schema.update'
-KEY_SCHEMA = 'schema.updated'
-
-EVENT_DATA = 'data.publish'
+EVENT_SCHEMA = 'device.schema.sent'
+KEY_SCHEMA = 'device.schema.updated'
 
 KEY_DATA = 'data.published'
 
@@ -71,12 +69,14 @@ def __on_msg_received(args, channel, method, properties, body):
     message = json.loads(body)
     message['error'] = 'error mocked' if args.with_side_effect else None
 
-    if method.routing_key == EVENT_DATA:
+    if method.exchange == data_exchange: # ONLINE state
         return None
-    elif method.routing_key == EVENT_REGISTER:
+
+    elif method.routing_key == EVENT_REGISTER: # REGISTER state
         message['token'] = secrets.token_hex(20)
         del message['name']
-    elif method.routing_key == EVENT_AUTH:
+
+    elif method.routing_key == EVENT_AUTH: # AUTH state
         del message['token']
     elif method.routing_key == EVENT_LIST:
         message['devices'] = [
@@ -101,7 +101,7 @@ def __on_msg_received(args, channel, method, properties, body):
                 "name": "LED"
             }]
         }]
-    elif method.routing_key == EVENT_SCHEMA:
+    elif method.routing_key == EVENT_SCHEMA: # SCHEMA state
         del message['schema']
 
     channel.basic_publish(
@@ -160,6 +160,7 @@ def no_command(args):
     parser.print_help()
     exit(1)
 
+# Setting-Up CLI Enviroment
 parser = argparse.ArgumentParser(description='Mock KNoT Fog Connector')
 parser.set_defaults(func=no_command)
 subparsers = parser.add_subparsers(help='sub-command help', dest='subcommand')
