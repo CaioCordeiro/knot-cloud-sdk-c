@@ -24,8 +24,9 @@ import json
 import argparse
 import secrets
 
-cloud_exchange = 'connIn'
-fog_exchange = 'connOut'
+#AMQP Configuration values:
+data_exchange = 'data.sent'
+device_exchange = 'device'
 
 QUEUE_CLOUD_NAME = 'connIn-messages'
 
@@ -48,15 +49,16 @@ KEY_SCHEMA = 'schema.updated'
 
 EVENT_DATA = 'data.publish'
 
-KEY_UPDATE = 'data.update'
-KEY_REQUEST = 'data.request'
+KEY_DATA = 'data.published'
 
+#Mapper object -> Maps EVENT (Routing Key) to KEY (Response)
 mapper = {
     EVENT_REGISTER: KEY_REGISTERED,
     EVENT_UNREGISTER: KEY_UNREGISTERED,
     EVENT_AUTH: KEY_AUTH,
     EVENT_LIST: KEY_LIST_DEVICES,
     EVENT_SCHEMA: KEY_SCHEMA,
+    data_exchange: KEY_DATA # Thing data has it own fanout exchange, so it doesn't need a Routing Key
 }
 
 logging.basicConfig(
@@ -103,45 +105,53 @@ def __on_msg_received(args, channel, method, properties, body):
         del message['schema']
 
     channel.basic_publish(
-        exchange=fog_exchange,
+        exchange=device_exchange,
         routing_key=mapper[method.routing_key],
         body=json.dumps(message)
     )
     logging.info(" [x] Sent %r" % (message))
 
+# Starts AMQP connection
 def __amqp_start():
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
-
-    channel.exchange_declare(exchange=fog_exchange, durable=True,
-    exchange_type='topic')
-    channel.exchange_declare(exchange=cloud_exchange, durable=True,
-    exchange_type='topic')
+    # Device exchange
+    channel.exchange_declare(exchange=device_exchange, durable=True,
+                             exchange_type='direct')
+    # Data receiving exchange
+    channel.exchange_declare(exchange=data_exchange, durable=True,
+                             exchange_type='fanout')
 
     return channel
 
 # Parser sub-commands
 def msg_consume(args):
     channel = __amqp_start()
-    result = channel.queue_declare(QUEUE_CLOUD_NAME, exclusive=False, durable=True)
+    result = channel.queue_declare(
+        QUEUE_CLOUD_NAME, exclusive=False, durable=True)
     queue_name = result.method.queue
+    # Binding EVENTS to 'device' exchange
+    channel.queue_bind(
+        exchange=device_exchange, queue=queue_name, routing_key=EVENT_REGISTER)
+    channel.queue_bind(
+        exchange=device_exchange, queue=queue_name, routing_key=EVENT_UNREGISTER)
+    channel.queue_bind(
+        exchange=device_exchange, queue=queue_name, routing_key=EVENT_AUTH)
+    channel.queue_bind(
+        exchange=device_exchange, queue=queue_name, routing_key=EVENT_SCHEMA)
 
+    # Binding EVENT to 'data.sent' exchange
     channel.queue_bind(
-            exchange=cloud_exchange, queue=queue_name, routing_key='device.*')
-    channel.queue_bind(
-        exchange=cloud_exchange, queue=queue_name, routing_key='device.cmd.list')
-    channel.queue_bind(
-            exchange=cloud_exchange, queue=queue_name, routing_key='schema.*')
-    channel.queue_bind(
-            exchange=cloud_exchange, queue=queue_name, routing_key='data.*')
+        exchange=data_exchange, queue=queue_name)
 
     def __wrapper_msg_received(ch, mth, props, body):
         __on_msg_received(args, ch, mth, props, body)
 
+    # Starting to consume queue
     channel.basic_consume(queue=queue_name,
-    on_message_callback=__wrapper_msg_received,
-    auto_ack=True)
+                          on_message_callback=__wrapper_msg_received,
+                          auto_ack=True)
 
     logging.info('Listening to messages')
     channel.start_consuming()
