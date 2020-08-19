@@ -92,7 +92,7 @@ static const char *mq_server_exception_string(amqp_rpc_reply_t reply)
 		break;
 	}
 
-	return l_strdup(r);
+	return r;
 }
 
 static const char *mq_rpc_reply_string(amqp_rpc_reply_t reply)
