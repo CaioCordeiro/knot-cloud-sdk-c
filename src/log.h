@@ -23,4 +23,5 @@
  * Log header file
  */
 
+void log_set_priority(int priority);
 void log_ell_enable(void);

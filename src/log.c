@@ -59,6 +59,13 @@ static void log_stderr_handler(int priority, const char *file, const char *line,
 	vfprintf(stderr, format, ap);
 }
 
+void log_set_priority(int priority)
+{
+	log_priority = priority;
+	if (log_priority == L_LOG_DEBUG)
+		l_debug_enable("*");
+}
+
 void log_ell_enable(void)
 {
 	l_log_set_handler(log_stderr_handler);

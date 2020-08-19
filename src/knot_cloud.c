@@ -387,6 +387,26 @@ static void destroy_cloud_queue(void)
 }
 
 /**
+ * knot_cloud_set_log_priority:
+ * @priority: Log Priority
+ *
+ * Changes the knot cloud SDK log priority.
+ *
+ * Returns: void.
+ */
+void knot_cloud_set_log_priority(char *priority)
+{
+	if (!strcmp(priority,"error"))
+		log_set_priority(L_LOG_ERR);
+	else if (!strcmp(priority,"warn"))
+		log_set_priority(L_LOG_WARNING);
+	else if (!strcmp(priority,"info"))
+		log_set_priority(L_LOG_INFO);
+	else if (!strcmp(priority,"debug"))
+		log_set_priority(L_LOG_DEBUG);
+}
+
+/**
  * knot_cloud_register_device:
  * @id: device id
  * @name: device name
