@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #include <ell/ell.h>
 #include <json-c/json.h>
 #include <amqp.h>
@@ -394,16 +395,26 @@ static void destroy_cloud_queue(void)
  *
  * Returns: void.
  */
-void knot_cloud_set_log_priority(char *priority)
+int knot_cloud_set_log_priority(int priority)
 {
-	if (!strcmp(priority,"error"))
+	switch (priority) {
+	case CLOUD_LOG_PRIORITY_ERROR:
 		log_set_priority(L_LOG_ERR);
-	else if (!strcmp(priority,"warn"))
+		break;
+	case CLOUD_LOG_PRIORITY_WARN:
 		log_set_priority(L_LOG_WARNING);
-	else if (!strcmp(priority,"info"))
+		break;
+	case CLOUD_LOG_PRIORITY_INFO:
 		log_set_priority(L_LOG_INFO);
-	else if (!strcmp(priority,"debug"))
+		break;
+	case CLOUD_LOG_PRIORITY_DEBUG:
 		log_set_priority(L_LOG_DEBUG);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 /**

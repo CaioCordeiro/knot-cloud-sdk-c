@@ -19,6 +19,11 @@
  *
  */
 
+#define CLOUD_LOG_PRIORITY_ERROR 3
+#define CLOUD_LOG_PRIORITY_WARN 4
+#define CLOUD_LOG_PRIORITY_INFO 6
+#define CLOUD_LOG_PRIORITY_DEBUG 7
+
 struct knot_cloud_device {
 	char *id;
 	char *uuid;
@@ -52,7 +57,7 @@ typedef bool (*knot_cloud_cb_t) (const struct knot_cloud_msg *msg,
 typedef void (*knot_cloud_connected_cb_t) (void *user_data);
 typedef void (*knot_cloud_disconnected_cb_t) (void *user_data);
 
-void knot_cloud_set_log_priority(char *priority);
+int knot_cloud_set_log_priority(int priority);
 int knot_cloud_register_device(const char *id, const char *name);
 int knot_cloud_unregister_device(const char *id);
 int knot_cloud_auth_device(const char *id, const char *token);
