@@ -27,3 +27,7 @@ src/Makefile
 src/Makefile.in
 libs/
 stamp-h1
+test-env.sh.log
+test-env.sh.trs
+test-suite.log
+integration_test

@@ -76,6 +76,26 @@ To install KNoT Protocol, you have to follow the instructions below:
 
 1. `$ make install`
 
+## Test
+
+### Integration Test
+
+1. `$ autoreconf -i`
+2. `$ make check`
+
+### Mock-Cloud
+
+In case you want to create a test enviroment for your thingd, we provide a
+emulation of the cloud enviroment.
+To run this emulation you must:
+
+Run a RabbitMQ docker image:
+
+`docker run -d --hostname rabbitmqhost --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management-alpine`
+
+Execute the mock-cloud.py as a listener:
+
+`python3 test/mock-cloud.py listen`
 
 ## License
 
