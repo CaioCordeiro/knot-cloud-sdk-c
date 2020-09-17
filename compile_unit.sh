@@ -1,1 +1,3 @@
-gcc -o parser-unit-test test/unit/parser/parser-unit-test.c src/parser.c -lknotprotocol
+gcc -Isrc/ -o parser-unit-test src/parser.c test/unit/parser/parser-unit-test.c \
+-lknotprotocol -lell -ldl -ljson-c
+./parser-unit-test
