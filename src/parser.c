@@ -107,7 +107,6 @@ static char *get_str_value_from_json(json_object *jso, const char *key)
 		return NULL;
 
 	str_value = l_strdup(json_object_get_string(jobjkey));
-	json_object_put(jso);
 
 	return str_value;
 }
@@ -140,7 +139,7 @@ static void *device_array_item(json_object *array_item,
 		KNOT_JSON_FIELD_DEVICE_NAME);
 	if (!name)
 		return NULL;
-
+	// l_info("%s",name);
 	return cb(id, name, schema);
 }
 
@@ -526,7 +525,7 @@ struct l_queue *parser_schema_to_list(const char *json_str)
 		type_id = json_object_get_int(jobjkey);
 
 		/* Getting 'name' */
-		if (!json_object_object_get_ex(jobjentry, 
+		if (!json_object_object_get_ex(jobjentry,
 						KNOT_JSON_FIELD_DEVICE_NAME,
 						&jobjkey))
 			break;
