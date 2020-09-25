@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include <knot/knot_protocol.h>
-#include <knot/knot_cloud.h>
 
 #include "../src/parser.h"
 
@@ -30,10 +29,12 @@ static int test_schema_create_object(void)
 
 	if(err != 0 ) {
 		l_queue_destroy(queue, l_free);
+		l_free((char*)json_str);
 
 		return -EINVAL;
 	}
 	l_queue_destroy(queue, l_free);
+	l_free((char*)json_str);
 
 	return 0;
 }
@@ -53,9 +54,12 @@ static int test_data_create_object(void)
 		     " \"value\": 1223 } ] }", json_str);
 
 	if(err != 0 ) {
+		l_free((char*)json_str);
 
 		return -EINVAL;
 	}
+
+	l_free((char*)json_str);
 
 	return 0;
 
@@ -85,6 +89,7 @@ static int test_sensorid_to_json(void)
 	err = strcmp("{ \"Sensor_Test\": [ { \"sensorId\": 12 }, { \"sensorId\": "
 		     "122 }, { \"sensorId\": 10 } ] }", json_str);
 
+	l_free((char*)json_str);
 
 	if(err != 0 ) {
 		l_queue_destroy(queue, l_free);
@@ -109,9 +114,12 @@ static int test_device_json_create(void)
 		     "\"test_device_id\" }", json_str);
 
 	if(err != 0 ) {
+		l_free((char*)json_str);
 
 		return -EINVAL;
 	}
+
+	l_free((char*)json_str);
 
 	return 0;
 }
@@ -128,9 +136,12 @@ static int test_auth_json_create(void)
 		     " \"test_device_token\" }", json_str);
 
 	if(err != 0 ) {
+		l_free((char*)json_str);
 
 		return -EINVAL;
 	}
+
+	l_free((char*)json_str);
 
 	return 0;
 
@@ -146,9 +157,12 @@ static int test_unregister_json_create(void)
 	err = strcmp("{ \"id\": \"test_device_id\" }", json_str);
 
 	if(err != 0 ) {
+		l_free((char*)json_str);
 
 		return -EINVAL;
 	}
+
+	l_free((char*)json_str);
 
 	return 0;
 }
@@ -165,9 +179,12 @@ static int test_get_key_str_from_json_str(void)
 	err = strcmp("test_device_id", value_str);
 
 	if(err != 0 ) {
+		l_free((char*)value_str);
 
 		return -EINVAL;
 	}
+
+	l_free((char*)value_str);
 
 	return 0;
 }
@@ -203,6 +220,7 @@ static int test_update_to_list(void)
 	if(msg->sensor_id != 1 || msg->payload.val_i != 0) {
 		goto error;
 	}
+	l_free(msg);
 
 	msg = l_queue_pop_head(queue);
 
@@ -237,6 +255,7 @@ static int test_request_to_list(void)
 	if(*sensor_id != 12)
 		goto error;
 
+	l_free(sensor_id);
 	sensor_id = l_queue_pop_head(queue);
 
 	if(sensor_id == NULL)
@@ -245,6 +264,7 @@ static int test_request_to_list(void)
 	if(*sensor_id != 23)
 		goto error;
 
+	l_free(sensor_id);
 	sensor_id = l_queue_pop_head(queue);
 
 	if(sensor_id == NULL)
@@ -254,10 +274,12 @@ static int test_request_to_list(void)
 		goto error;
 
 	l_queue_destroy(queue, l_free);
+	l_free(sensor_id);
 
 	return 0;
 error:
 	l_queue_destroy(queue, l_free);
+	l_free(sensor_id);
 
 	return -EINVAL;
 }
@@ -283,10 +305,17 @@ static void *check_json_integrity(const char *id, const char *name,
 	if(strcmp(json_str,"{ \"id\": \"TEST_ID_1\", \"schema\": [ "
 			   "{ \"sensorId\": 1, \"valueType\": 3, \""
 			   "unit\": 0, \"typeId\": 65521, \"name\":"
-			   " \"Schema_test\" } ] }") != 0 )
-		goto error;
+			   " \"Schema_test\" } ] }") != 0 ){
+
+		l_queue_destroy(schema, l_free);
+		l_free((char*)json_str);
+		res = -EINVAL;
+
+		return l_memdup(res_p, sizeof(int));
+	}
 
 	l_queue_destroy(schema, l_free);
+	l_free((char*)json_str);
 
 	return l_memdup(res_p, sizeof(int));
 
